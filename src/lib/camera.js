@@ -1,38 +1,32 @@
 import { createWorker } from 'tesseract.js'
-import { loadSettings } from './storage'
+import { settings, setSettings, matches, setMatches } from './storage'
+import { createSignal } from 'solid-js'
+
+export const [deviceList, setDeviceList] = createSignal([
+  { label: 'none', id: null }
+])
+
 let width
 let height
 let streaming
 let video
 let videoPreview
 let videoAnalyze
-let resultView
 let lastTimestamp = 0
 let worker
-let bell
-let lastSO
-const settingsPreset = { treshold: 70, run: false, selectedDevice: null }
-export let settings = {}
-export const results = {}
 
-export async function setUp () {
-  settings = loadSettings() || settingsPreset
-  console.log('recieved settngs', settings)
+export async function setUp (v, vp, va) {
+  video = v
+  videoPreview = vp
+  videoAnalyze = va
   width = 640
   height = 0
-  video = document.querySelector('#video')
-  videoPreview = document.querySelector('#videoPreview')
-  videoAnalyze = document.querySelector('#videoAnalyze')
-  resultView = document.querySelector('#resultView')
-  bell = document.querySelector('#bell')
-lastSO = document.querySelector('#lastSO')
   streaming = false
   worker = await createWorker('eng', 1) //, {logger: function(m){console.log(m)}})
-  if (settings.selectedDevice) getStream()
+  
 }
 
 export async function getDeviceList () {
-  const deviceList = [{ label: 'none', id: null }]
   try {
     let stream = await navigator.mediaDevices.getUserMedia({
       audio: false,
@@ -42,16 +36,15 @@ export async function getDeviceList () {
     let devices = await navigator.mediaDevices.enumerateDevices()
 
     devices.forEach(device => {
-      console.log('device.label :', device.label)
-      console.table(device)
       if (device.kind == 'videoinput')
-        deviceList.push({ label: device.label, id: device.deviceId })
+        setDeviceList([
+          ...deviceList(),
+          { label: device.label, id: device.deviceId }
+        ])
     })
   } catch (e) {
     console.log('error in getting device list', e)
   }
-
-  return deviceList
 }
 
 export async function getStream () {
@@ -61,7 +54,7 @@ export async function getStream () {
       video: { deviceId: settings.selectedDevice },
       audio: false
     })
-
+    console.log(video)
     video.srcObject = stream
     video.play()
 
@@ -76,7 +69,7 @@ export async function getStream () {
           videoPreview.setAttribute('height', height)
           videoAnalyze.setAttribute('width', width) //* .555)
           videoAnalyze.setAttribute('height', height * 0.333) // * .333)
-          
+
           streaming = true
         }
       },
@@ -87,7 +80,7 @@ export async function getStream () {
   }
 }
 
-export function drawVideoPreview () {
+function drawVideoPreview () {
   let context = videoPreview.getContext('2d', { willReadFrequently: true })
   context.drawImage(
     video,
@@ -152,16 +145,12 @@ async function step (timestamp) {
   if (timestamp - lastTimestamp > 600) {
     lastTimestamp = timestamp
     drawVideoPreview()
-    await analize()
-    resultView.textContent =
-      results.confidence + ' ' + results.result + ' ' + settings.treshold
+    if (settings.run) await analize()
   }
   if (settings.run) window.requestAnimationFrame(step)
 }
 
 async function analize () {
-  results.confidence = 0
-  results.result = null
   let context = videoAnalyze.getContext('2d')
   context.drawImage(
     videoPreview,
@@ -182,20 +171,16 @@ async function analize () {
     { rotateAuto: true },
     { imageColor: true, imageGrey: true, imageBinary: true }
   )
-  console.log(r)
-  results.confidence = r.data.confidence
-  if (r?.data?.confidence > 50) results.result = r.data.text
-  extractData(r)
+
+  if (r?.data?.confidence > 70) extractData(r)
 }
 
 function extractData (r) {
   r.data.lines.forEach(l => {
     l.words.forEach(w => {
-      if (/\d{8}/.test(w.text)) {
-        console.log('GOOOTTTT IIIITTTTTT')
-        console.log(w.text)
-        lastSO.textContent = w.text
-        bell.play()
+      let match = w.text.match(/\d{8}/)
+      if (match) {
+        setMatches(matches => [...matches, match[0]])
       }
     })
   })

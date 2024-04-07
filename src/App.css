@@ -25,3 +25,34 @@
 .read-the-docs {
   color: #888;
 }
+
+
+/*/////////////////////////////////*/
+#videoPreview{
+  width: 100vw;
+  aspect-ratio: 1/1;
+}
+
+#videoAnalyze{
+  width: 80%;
+/*   aspect-ratio: 1/1;
+ */}
+
+#pile{
+  display: grid;
+  grid-template-areas: pile;
+  place-items: center;
+}
+/*
+*/
+#pile > *{
+  grid-area: pile;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+#lastSO{
+  margin-top: 12rem;
+  color: greenyellow
+}
