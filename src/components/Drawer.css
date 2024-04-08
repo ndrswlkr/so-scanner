@@ -1,0 +1,17 @@
+.drawer{
+    transition: left 500ms;
+    position: absolute;
+    top: 8vh;
+    left: -60%;
+    width: 60%;
+    height: 90vh;
+    border-radius: 5px;
+    background-color: var(--pico-background-color);
+    border: 1px solid var(--pico-primary-border);
+    z-index: 1;
+}
+
+.show{
+    transition: left 500ms;
+    left: 3%;
+}

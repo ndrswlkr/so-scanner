@@ -1,14 +1,16 @@
-import { createSignal, onMount, createEffect, For, on } from 'solid-js'
+import { createSignal, onMount, createEffect, For, onCleanup, on } from 'solid-js'
+import { Portal } from 'solid-js/web'
 import solidLogo from './assets/solid.svg'
 import viteLogo from '/vite.svg'
-import './App.css'
+import './Recognizer.css'
 
 import {
   settings,
   setSettings,
   loadSettings,
   saveSettings,
-  matches
+  matches, setMatches, lists, setLists, saveLists, loadLists,
+  lastDetected, setLastDetected
 } from './lib/storage'
 
 import { getDeviceList, setUp, startAnalyze, getStream } from './lib/camera'
@@ -18,14 +20,27 @@ import StartButton from './components/StartButton'
 
 let video, videoPreview, videoAnalyze, bell
 
-function App () {
+function Recognizer () {
   const [lastSO, setLastSO] = createSignal('nothing detected')
+  
+  function toggleStart() {
+      setSettings(settings => ({...settings, run: !settings.run}))
+     if (settings.run) startAnalyze()
+  }
+
   onMount(async () => {
     loadSettings()
     setUp(video, videoPreview, videoAnalyze)
     await getDeviceList()
   })
 
+  onCleanup(() => {
+    setSettings(settings => ({ ...settings, run: false }))
+    if(matches.length){
+
+    }
+    console.log("you left")
+  })
   createEffect(() => {
     saveSettings(settings)
   })
@@ -34,32 +49,33 @@ function App () {
     if (settings.selectedDevice) getStream()
   })
 
-  createEffect(() => {
-    if (settings.run) {
-      startAnalyze()
-    }
-  })
 
-  createEffect(() => {
-    if (!matches.length) return
-    setLastSO(matches[matches.length - 1])
-    setSettings(settings => ({ ...settings, run: false }))
+  createEffect( on( () => lastDetected(),() => {
+    if (!lastDetected()) return
+    
+    //setLastSO(matches[matches.length - 1])
+    setMatches(matches => [...matches, lastDetected()])
     bell.play()
+    setSettings(settings => ({ ...settings, run: false }))
     setTimeout(() => {
-      setSettings(settings => ({ ...settings, run: true }))
-      setLastSO("nothing detected")
+      toggleStart()
+      setLastDetected(null)
     }, 3000)
-  })
+  }))
 
   return (
     <>
-      <div id='controls'>
-        <DeviceSelector />
+      <Portal mount={document.getElementById('menu-drawer')}>
+        <article>
+          <DeviceSelector />
+        </article>
+      </Portal>
+      <div id='controls' role="group">
         <TresholdSelector />
-        <StartButton />
+        <StartButton start={toggleStart}/>
       </div>
       <audio ref={bell} id='bell' src='achievement-bell.wav'></audio>
-      <div>
+      <div id='video-div'>
         <video ref={video} id='video' width='640' height='640' hidden='true'>
           Video stream not available.
         </video>
@@ -72,7 +88,7 @@ function App () {
             height='360'
           ></canvas>
           <canvas id='videoAnalyze' ref={videoAnalyze} hidden='true'></canvas>
-          <h3 id='lastSO'>{lastSO()}</h3>
+          <h3 id='lastSO'>{lastDetected() ? lastDetected() : 'nothing detected'}</h3>
         </div>
         <ul id='resultView'>
           <For each={matches}>{match => <li>{match}</li>}</For>
@@ -82,4 +98,4 @@ function App () {
   )
 }
 
-export default App
+export default Recognizer

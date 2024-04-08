@@ -10,7 +10,7 @@ function TresholdSelector () {
       <For each={treshValues}>
         {val => (
           <option value={val} selected={val === Number(settings.treshold)}>
-            {val}
+            {val}% filter treshold
           </option>
         )}
       </For>

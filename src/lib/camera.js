@@ -1,7 +1,7 @@
 import { createWorker } from 'tesseract.js'
 import { settings, setSettings, matches, setMatches } from './storage'
 import { createSignal } from 'solid-js'
-
+import { setLastDetected } from './storage'
 export const [deviceList, setDeviceList] = createSignal([
   { label: 'none', id: null }
 ])
@@ -180,7 +180,8 @@ function extractData (r) {
     l.words.forEach(w => {
       let match = w.text.match(/\d{8}/)
       if (match) {
-        setMatches(matches => [...matches, match[0]])
+       // setMatches(matches => [...matches, match[0]])
+       setLastDetected(match[0])
       }
     })
   })

@@ -1,6 +1,7 @@
 import { createSignal } from 'solid-js'
 import { createStore } from 'solid-js/store'
 
+///settings
 export const [settings, setSettings] = createStore({
   treshold: 70,
   run: false,
@@ -21,3 +22,17 @@ export const loadSettings = () => {
 ////matches
 
 export const [matches, setMatches] = createStore([])
+export const [lastDetected, setLastDetected] = createSignal(null)
+///lists
+
+export const [lists, setLists] = createStore({})
+
+export const saveLists = () => {
+    localStorage.setItem('lists', JSON.stringify(lists))
+}
+
+export const loadLists = () => {
+    const store = localStorage.getItem('lists')
+    if (!store) return
+    setLists(JSON.parse(store))
+}

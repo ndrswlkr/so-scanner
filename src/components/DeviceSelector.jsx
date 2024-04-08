@@ -3,7 +3,9 @@ import { deviceList } from '../lib/camera'
 function DeviceSelector () {
   return (
     <div>
+      <label for="device-selector">select device</label>
       <select
+        id="device-selector"
         onChange={e =>
           setSettings(settings => ({
             selectedDevice: e.target.value

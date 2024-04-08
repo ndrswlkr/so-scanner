@@ -1,13 +1,10 @@
-import {settings, setSettings} from '../lib/storage'
+import { settings } from "../lib/storage"
 
-
-function StartButton () {
+function StartButton (props) {
   return (
     <button
       onClick={() =>
-        setSettings(settings => ({
-          run: !settings.run
-        }))
+        props.start()
       }
     >
       {settings.run ? 'stop' : 'start'}
